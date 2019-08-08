@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{5c519a16-ac15-43b1-b808-f75754632a09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header">
+      <UniqueIdentifier>{60a9bd0a-f294-4881-8169-e87517952c6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{08a633f7-4846-4e6c-b89f-7052e05c60c3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Example\Example\main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="LSFModel.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="pugixml.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="FOAW.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorNN.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorRF.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="NoiseModel.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorNoise.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\Imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\Imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\Imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\Imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\Imgui\imgui_impl_opengl3.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\external\Imgui\imgui_impl_glfw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AccSynthHashMatrix.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="foreach.hpp">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="LSFModel.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="pugiconfig.hpp">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="pugixml.hpp">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="shared.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="sharedInit.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="DigitalFilter.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="FOAW.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorNN.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorRF.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="NoiseModel.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorNoise.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\external\Imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\external\Imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\external\Imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\external\Imgui\imgui_impl_opengl3.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\external\Imgui\imgui_impl_glfw.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="IconsFontAwesome5.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
