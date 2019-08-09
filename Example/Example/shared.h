@@ -7,6 +7,9 @@
 #define MAX_MACOEFF 25
 
 #define NUM_TEX 10
+#define NUM_SIGMA 5
+#define NUM_ZMAX 6
+#define NUM_ZRATIO 4
 #define NUM_REPETITION 3
 
 #define IM_SIZE 3145728
@@ -45,13 +48,7 @@ extern double planeY;
 extern double planeZ;
 extern double planeSize; //Size of textured plane: 0.1 m for each side
 
-//For force rendering
-extern double sigma[NUM_TEX];
-extern double zMax[NUM_TEX];
-extern double zStick[NUM_TEX];
-
 extern int textNum;
-extern char* texArray[NUM_TEX]; // stores names of textures
 
 extern double velTH;		//Velocity threshold for moving
 

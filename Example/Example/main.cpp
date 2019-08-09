@@ -26,8 +26,6 @@ using namespace std;
 #include <sstream>
 #include <cstdlib>
 #include <ctime>
-#include "FOAW.h"
-#include "DigitalFilter.h"
 #include "shared.h"
 #include "sharedInit.h"
 #include <direct.h>
@@ -36,13 +34,14 @@ using namespace std;
 #include "imgui_impl_opengl3.h"
 #include "IconsFontAwesome5.h"
 #define NUM_TRAINING 10
+#define TEN 10
 
 //-------------------
 //Experiment setting
 //-------------------
-struct ExpSession thisExp[NUM_TEX];
+struct ExpSession thisExp[TEN];
 struct ExpTraining thisTraining[NUM_TRAINING];
-struct ExpSessionResponse thisResponse[NUM_TEX];
+struct ExpSessionResponse thisResponse[TEN];
 struct ExpResponse trainingResponse[NUM_TRAINING];
 int currentSession = 0;
 int currentTrial = 0;
@@ -134,14 +133,12 @@ double maxLinearDamping;
 double maxStiffness;
 
 //texture object
-cMesh* object0[NUM_TEX];
-cMesh* object1[NUM_TEX];
+cMesh* objectArray[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO];
 
 bool isSampleReady = false;
 bool isTraining = true;
 bool showControlPanel = false;
-int trainingTextureL = 0;
-int trainingTextureR = 0;
+int trainingTexture = 0;
 
 double forceMagnitude = 0;
 
@@ -175,7 +172,6 @@ void close(void);
 // main haptics simulation loop
 void updateHaptics(void);
 
-void textureInfoInit();
 int loadTexture();
 
 int exp_next();
@@ -187,6 +183,10 @@ void exp_make_new_order();
 void exp_load_exp_order();
 void exp_save_response();
 void exp_training_prep();
+
+double sigmaArray[NUM_SIGMA] = { 1.0E+1, 2.5E+1, 6.0E+1, 1.5E+2, 3.9E+2 };
+double zMaxArray[NUM_ZMAX] = { 3.0E-5, 1.0E-4, 3.0E-4, 1.0E-3, 3.0E-3, 1.0E-2 };
+double zRatioArray[NUM_ZRATIO] = { 1.1, 1.2, 1.3, 1.4 };
 
 
 int main(int argc, char* argv[])
@@ -423,7 +423,6 @@ int main(int argc, char* argv[])
     /////////////////////////////////////////////////////////////////////////
 
     //Texture info
-    textureInfoInit();
     loadTexture();
 
     //Subject info loading
@@ -571,10 +570,6 @@ void close(void)
     delete handler;
     //	delete myVM;
 
-    for (int i = 0; i < NUM_TEX; i++)
-    {
-        delete texArray[i];
-    }
 
     for (int i = 0; i < numTotalSubject; i++)
         delete subjectItems[i];
@@ -807,9 +802,9 @@ void updateGUI(void)
         if (showControlPanel)
         {
 
-            float sigma = object1[trainingTextureR]->m_material->getSigma();
-            float zmax = object1[trainingTextureR]->m_material->getZmax();
-            float zstick = object1[trainingTextureR]->m_material->getZstick();
+            float sigma = objectArray[trainingTexture]->m_material->getSigma();
+            float zmax = objectArray[trainingTexture]->m_material->getZmax();
+            float zstick = objectArray[trainingTexture]->m_material->getZstick();
             string forceMagnitudeText;
             ostringstream strs;
             strs << forceMagnitude;
@@ -831,9 +826,9 @@ void updateGUI(void)
             ImGui::SetNextItemWidth((float)size.x * 2 + ImGui::GetStyle().ItemSpacing.x);
             ImGui::End();
             
-            object1[trainingTextureR]->m_material->setSigma(sigma);
-            object1[trainingTextureR]->m_material->setZmax(zmax);
-            object1[trainingTextureR]->m_material->setZstick(zstick);
+            objectArray[trainingTexture]->m_material->setSigma(sigma);
+            objectArray[trainingTexture]->m_material->setZmax(zmax);
+            objectArray[trainingTexture]->m_material->setZstick(zstick);
         }
 
         ImGui::SetNextWindowPos(ImVec2(750, 200));
@@ -844,7 +839,7 @@ void updateGUI(void)
         if (isTraining)
             progress = "Training " + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_TRAINING);
         else
-            progress = "Main Exp. " + std::to_string(currentSession + 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_TEX) + "-" + std::to_string(NUM_REPETITION);
+            progress = "Main Exp. " + std::to_string(currentSession + 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO) + "-" + std::to_string(NUM_REPETITION);
         ImVec2 textSize = ImGui::CalcTextSize(progress.c_str());
         ImGui::SetCursorPosX((420 - textSize.x) / 2);
         ImGui::Text(progress.c_str());
@@ -881,16 +876,14 @@ void updateHaptics(void)
 
         if (experimentRunning && isSampleReady)	//Render force and vibration only when the experiment is in running
         {
-            if (isTraining && (tool->isInContact(object0[trainingTextureL]) || tool->isInContact(object1[trainingTextureR])))
+            if (isTraining && tool->isInContact(objectArray[trainingTexture]))
             {
-                object0[trainingTextureL]->m_material->setUseHapticTexture(true);
-                object1[trainingTextureR]->m_material->setUseHapticTexture(true);
+                objectArray[trainingTexture]->m_material->setUseHapticTexture(true);
                 outputRender = true;
             }
-            else if (!isTraining && ((tool->isInContact(object0[textNum])) || (tool->isInContact(object1[textNum]))))
+            else if (!isTraining && tool->isInContact(objectArray[textNum]))
             {
-                object0[textNum]->m_material->setUseHapticTexture(true);
-                object1[textNum]->m_material->setUseHapticTexture(true);
+                objectArray[textNum]->m_material->setUseHapticTexture(true);
                 outputRender = true;
             }
         }
@@ -953,89 +946,39 @@ void updateHaptics(void)
 }
 
 
-void textureInfoInit()
-{
-    for (int i = 0; i < NUM_TEX; i++)
-    {
-        texArray[i] = new char[50];
-    }
-
-    //Texture name array
-    strcpy(texArray[0], "Acryl");
-    strcpy(texArray[1], "Bamboo");
-    strcpy(texArray[2], "CoatedHardBoard");
-    strcpy(texArray[3], "Cork");
-    strcpy(texArray[4], "Denim");
-    strcpy(texArray[5], "RubberMat");
-    strcpy(texArray[6], "Tile");
-    strcpy(texArray[7], "Towel");
-    strcpy(texArray[8], "Velvet");
-    strcpy(texArray[9], "Wood");
-}
 
 int loadTexture()
 {
     int result = 0;
-    //File read
-    std::ifstream myfile;
-    bool fileload;
 
-    for (int i = 0; i < NUM_TEX; i++)
-    {
-        string fileName;
-        string textureName(texArray[i]);
-        fileName = "../../resources/textures/" + textureName + ".txt";
-        myfile.open(RESOURCE_PATH(fileName.c_str()));
-        myfile >> sigma[i];
-        myfile >> zMax[i];
-        myfile >> zStick[i];
-        myfile.close();
+	random_shuffle(std::begin(sigmaArray), std::end(sigmaArray));
+	random_shuffle(std::begin(zMaxArray), std::end(zMaxArray));
+	random_shuffle(std::begin(zRatioArray), std::end(zRatioArray));
 
-        // create a mesh
-        object0[i] = new cMesh();
-        object1[i] = new cMesh();
+	for(int sigmaIndex = 0; sigmaIndex < NUM_SIGMA; sigmaIndex++)
+		for(int zMaxIndex = 0; zMaxIndex < NUM_ZMAX; zMaxIndex++)
+			for (int zRatioIndex = 0; zRatioIndex < NUM_ZRATIO; zRatioIndex++)
+			{
+				int objectIndex = sigmaIndex * NUM_ZMAX * NUM_ZRATIO + zMaxIndex * NUM_ZRATIO + zRatioIndex;
+				objectArray[objectIndex] = new cMesh();
 
-        // create plane
-        cCreatePlane(object0[i], planeSize, planeSize);
-        cCreatePlane(object1[i], planeSize, planeSize);
+				cCreatePlane(objectArray[objectIndex], planeSize, planeSize);
+				objectArray[objectIndex]->createAABBCollisionDetector(toolRadius);
+				world->addChild(objectArray[objectIndex]);
+				objectArray[objectIndex]->setLocalPos(planeX, 0, planeZ);
+				///////////////////
+				objectArray[objectIndex]->m_texture = cTexture2d::create();
+				//////////////////
+				objectArray[objectIndex]->m_material->setWhite();
 
-        // create collision detector
-        object0[i]->createAABBCollisionDetector(toolRadius);
-        object1[i]->createAABBCollisionDetector(toolRadius);
+				objectArray[objectIndex]->m_material->setStiffness(maxStiffness);
+				objectArray[objectIndex]->m_material->setSigma(sigmaArray[sigmaIndex]);
+				objectArray[objectIndex]->m_material->setZmax(zMaxArray[zMaxIndex]);
+				objectArray[objectIndex]->m_material->setZstick(zMaxArray[zMaxIndex] * zRatioArray[zRatioIndex]);
+				objectArray[objectIndex]->m_material->setHapticTriangleSides(true, false);
 
-        // add object to world
-        world->addChild(object0[i]);
-        world->addChild(object1[i]);
-
-        // set the position of the object
-        object0[i]->setLocalPos(planeX, planeY, planeZ);
-        object1[i]->setLocalPos(planeX, -planeY, planeZ);
-
-        // set graphic properties
-        object0[i]->m_texture = cTexture2d::create();
-        object1[i]->m_texture = cTexture2d::create();
-
-        object0[i]->m_material->setWhite();
-
-        object1[i]->m_material->setWhite();
-
-        // set haptic properties
-        object0[i]->m_material->setStiffness(maxStiffness);
-        object0[i]->m_material->setSigma(sigma[i]);
-        object0[i]->m_material->setZmax(zMax[i]);
-        object0[i]->m_material->setZstick(zStick[i]);
-        object0[i]->m_material->setHapticTriangleSides(true, false);
-
-        object1[i]->m_material->setStiffness(maxStiffness);
-        object1[i]->m_material->setSigma(sigma[i]);
-        object1[i]->m_material->setZmax(zMax[i]);
-        object1[i]->m_material->setZstick(zStick[i]);
-        object1[i]->m_material->setHapticTriangleSides(true, false);
-
-        // Deactiavate object
-        object0[i]->setEnabled(false, true);
-        object1[i]->setEnabled(false, true);
-    }
+				objectArray[objectIndex]->setEnabled(false, true);
+			}
     return result;
 }
 
@@ -1043,7 +986,7 @@ int exp_prev()
 {
     if (isTraining)
     {
-        if (!(tool->isInContact(object0[trainingTextureL])) && !(tool->isInContact(object1[trainingTextureR])))
+        if (!(tool->isInContact(objectArray[trainingTexture])))
         {
             if (currentTrial > 0)
             {
@@ -1066,7 +1009,7 @@ int exp_prev()
     }
     else
     {
-        if (!(tool->isInContact(object0[textNum])) && !(tool->isInContact(object1[textNum])))
+        if (!(tool->isInContact(objectArray[textNum])))
         {
             if (currentTrial > 0)
             {
@@ -1092,7 +1035,7 @@ int exp_next()
 {
     if (isTraining)
     {
-        if (!(tool->isInContact(object0[trainingTextureL])) && !(tool->isInContact(object1[trainingTextureR])))
+        if (!(tool->isInContact(objectArray[trainingTexture])))
         {
             currentTrial++;
             if (currentTrial >= NUM_TRAINING)
@@ -1100,8 +1043,7 @@ int exp_next()
                 // Finish the training
                 currentTrial = 0;
                 isTraining = false;
-                object0[trainingTextureL]->setEnabled(false, true);
-                object1[trainingTextureR]->setEnabled(false, true);
+                objectArray[trainingTexture]->setEnabled(false, true);
                 exp_samp_change();
                 // End of training
                 return 3;
@@ -1121,14 +1063,14 @@ int exp_next()
     }
     else
     {
-        if (!(tool->isInContact(object0[textNum])) && !(tool->isInContact(object1[textNum])))
+        if (!(tool->isInContact(objectArray[textNum])))
         {
             currentTrial++;
             if (currentTrial >= NUM_REPETITION)
             {
                 currentSession++;
                 currentTrial = 0;
-                if (currentSession >= NUM_TEX)
+                if (currentSession >= NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO)
                 {
                     currentSession--;
                     currentTrial = NUM_REPETITION - 1;
@@ -1177,31 +1119,23 @@ void exp_samp_change()
     if (isTraining)
     {
         //Deactivate the previous models
-        object0[trainingTextureL]->setEnabled(false, true);
-        object1[trainingTextureR]->setEnabled(false, true);
-        trainingTextureL = thisTraining[currentTrial].textureL;
-        trainingTextureR = thisTraining[currentTrial].textureR;
-        object0[trainingTextureL]->setEnabled(true, true);
-        object1[trainingTextureR]->setEnabled(true, true);
+        objectArray[trainingTexture]->setEnabled(false, true);
+        trainingTexture++;
+        objectArray[trainingTexture]->setEnabled(true, true);
         cout << scientific;
-        cout << "Left Object:" << texArray[trainingTextureL] << endl;
-        cout << "sigma: " << object0[trainingTextureL]->m_material->getSigma() << " z_max: " << object0[trainingTextureL]->m_material->getZmax() << " z_stick: " << object0[trainingTextureL]->m_material->getZstick() << endl << endl;
-        cout << "Right Object:" << texArray[trainingTextureR] << endl;
-        cout << "sigma: " << object1[trainingTextureR]->m_material->getSigma() << " z_max: " << object1[trainingTextureR]->m_material->getZmax() << " z_stick: " << object1[trainingTextureR]->m_material->getZstick() << endl << endl;
+        cout << "sigma: " << objectArray[trainingTexture]->m_material->getSigma() << " z_max: " << objectArray[trainingTexture]->m_material->getZmax() 
+			<< " z_stick: " << objectArray[trainingTexture]->m_material->getZstick() << endl << endl;
     }
     else
     {
         //Deactivate the previous models
-        object0[textNum]->setEnabled(false, true);
-        object1[textNum]->setEnabled(false, true);
+        objectArray[textNum]->setEnabled(false, true);
         textNum = thisExp[currentSession].material;
         //Activate the next models
-        object0[textNum]->setUseTexture(false);
-        object1[textNum]->setUseTexture(false);
-        object0[textNum]->setEnabled(true, true);
-        object1[textNum]->setEnabled(true, true);
-        cout << "Current Object:" << texArray[textNum] << endl;
-        cout << "sigma: " << object0[textNum]->m_material->getSigma() << " z_max: " << object0[textNum]->m_material->getZmax() << " z_stick: " << object0[textNum]->m_material->getZstick() << endl << endl;
+        objectArray[textNum]->setUseTexture(false);
+        objectArray[textNum]->setEnabled(true, true);
+        cout << "sigma: " << objectArray[textNum]->m_material->getSigma() << " z_max: " << objectArray[textNum]->m_material->getZmax()
+			<< " z_stick: " << objectArray[textNum]->m_material->getZstick() << endl << endl;
     }
 }
 
@@ -1227,16 +1161,16 @@ void exp_make_new_order()
 {
     srand((unsigned int)time(NULL));
     //Init check counter
-    int checkS[NUM_TEX] = { 0, };
+    int checkS[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO] = { 0, };
 
     //Make experiment trial order
-    struct ExpSession newExp[NUM_TEX];
-    for (int i = 0; i < NUM_TEX; i++)
+    struct ExpSession newExp[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO];
+    for (int i = 0; i < NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO; i++)
     {
         int currentT;
         do
         {
-            currentT = rand() % NUM_TEX;
+            currentT = rand() % (NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO);
         } while (checkS[currentT] != 0);
 
         checkS[currentT] = 1;
@@ -1255,7 +1189,7 @@ void exp_make_new_order()
     string filename;
     filename = "exp/S" + std::to_string(numTotalSubject) + ".txt";
     ofstream newOrder(filename);
-    for (int i = 0; i < NUM_TEX; i++)
+    for (int i = 0; i < NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO; i++)
         newOrder << newExp[i].material << endl;
     newOrder.close();
 }
@@ -1271,7 +1205,7 @@ void exp_load_exp_order()
     std::vector<std::string> tokens;
     int cnt = 0;
 
-    for (int i = 0; i < NUM_TEX; i++)
+    for (int i = 0; i < TEN; i++)
     {
         getline(order, str);
         //std::cout << str << "ENDL" << std::endl;
@@ -1307,7 +1241,7 @@ void exp_save_response()
     filename = "exp/R" + std::to_string(numCurrentSubject + 1) + ".txt";
     ofstream response(filename);
 
-    for (int i = 0; i < NUM_TEX; i++)
+    for (int i = 0; i < TEN; i++)
     {
         for (int j = 0; j < NUM_REPETITION; j++)
         {

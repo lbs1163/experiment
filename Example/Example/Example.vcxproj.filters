@@ -15,9 +15,6 @@
     <ClCompile Include="..\..\Example\Example\main.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="LSFModel.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="pugixml.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -28,9 +25,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="ErrorRF.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="NoiseModel.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="ErrorNoise.cpp">
@@ -62,9 +56,6 @@
     <ClInclude Include="foreach.hpp">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="LSFModel.h">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="pugiconfig.hpp">
       <Filter>Header</Filter>
     </ClInclude>
@@ -87,9 +78,6 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="ErrorRF.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="NoiseModel.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="ErrorNoise.h">

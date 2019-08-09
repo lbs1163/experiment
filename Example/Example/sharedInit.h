@@ -9,15 +9,6 @@ double planeY = -0.06;
 double planeZ = 0.05;
 double planeSize = 0.10; //Size of textured plane: 0.1 m for each side
 
-//For force rendering
-double HEIGHT_SCALE[NUM_TEX];
-double kE[NUM_TEX];
-double bE[NUM_TEX];
-double m[NUM_TEX];
-double sigma[NUM_TEX];
-double zMax[NUM_TEX];
-double zStick[NUM_TEX];
-
 
 float filtLSF[200][MAX_COEFF];
 float filtMALSF[200][MAX_MACOEFF];
@@ -26,7 +17,6 @@ int MAcoeffNum = MAX_MACOEFF;
 int surfNum = 25;
 
 int textNum = 0;
-char* texArray[NUM_TEX]; // stores names of textures
 
 double velTH = 0.01;			//m/s
 

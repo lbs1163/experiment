@@ -29,9 +29,7 @@
     <ClCompile Include="ErrorNoise.cpp" />
     <ClCompile Include="ErrorRF.cpp" />
     <ClCompile Include="FOAW.cpp" />
-    <ClCompile Include="LSFModel.cpp" />
     <ClCompile Include="ErrorNN.cpp" />
-    <ClCompile Include="NoiseModel.cpp" />
     <ClCompile Include="pugixml.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -47,9 +45,7 @@
     <ClInclude Include="FOAW.h" />
     <ClInclude Include="foreach.hpp" />
     <ClInclude Include="IconsFontAwesome5.h" />
-    <ClInclude Include="LSFModel.h" />
     <ClInclude Include="ErrorNN.h" />
-    <ClInclude Include="NoiseModel.h" />
     <ClInclude Include="pugiconfig.hpp" />
     <ClInclude Include="pugixml.hpp" />
     <ClInclude Include="shared.h" />
