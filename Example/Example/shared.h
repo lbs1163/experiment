@@ -23,6 +23,12 @@
 #include "FOAW.h"
 #include <string>
 
+struct Parameters {
+	double sigma;
+	double zMax;
+	double zRatio;
+};
+
 struct ExpSession {
 	int material;
 };

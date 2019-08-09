@@ -187,6 +187,7 @@ void exp_training_prep();
 double sigmaArray[NUM_SIGMA] = { 1.0E+1, 2.5E+1, 6.0E+1, 1.5E+2, 3.9E+2 };
 double zMaxArray[NUM_ZMAX] = { 3.0E-5, 1.0E-4, 3.0E-4, 1.0E-3, 3.0E-3, 1.0E-2 };
 double zRatioArray[NUM_ZRATIO] = { 1.1, 1.2, 1.3, 1.4 };
+struct Parameters parameterArray[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO] = { 0 };
 
 
 int main(int argc, char* argv[])
@@ -951,34 +952,44 @@ int loadTexture()
 {
     int result = 0;
 
-	random_shuffle(std::begin(sigmaArray), std::end(sigmaArray));
-	random_shuffle(std::begin(zMaxArray), std::end(zMaxArray));
-	random_shuffle(std::begin(zRatioArray), std::end(zRatioArray));
-
-	for(int sigmaIndex = 0; sigmaIndex < NUM_SIGMA; sigmaIndex++)
-		for(int zMaxIndex = 0; zMaxIndex < NUM_ZMAX; zMaxIndex++)
+	for (int sigmaIndex = 0; sigmaIndex < NUM_SIGMA; sigmaIndex++)
+		for (int zMaxIndex = 0; zMaxIndex < NUM_ZMAX; zMaxIndex++)
 			for (int zRatioIndex = 0; zRatioIndex < NUM_ZRATIO; zRatioIndex++)
 			{
-				int objectIndex = sigmaIndex * NUM_ZMAX * NUM_ZRATIO + zMaxIndex * NUM_ZRATIO + zRatioIndex;
-				objectArray[objectIndex] = new cMesh();
-
-				cCreatePlane(objectArray[objectIndex], planeSize, planeSize);
-				objectArray[objectIndex]->createAABBCollisionDetector(toolRadius);
-				world->addChild(objectArray[objectIndex]);
-				objectArray[objectIndex]->setLocalPos(planeX, 0, planeZ);
-				///////////////////
-				objectArray[objectIndex]->m_texture = cTexture2d::create();
-				//////////////////
-				objectArray[objectIndex]->m_material->setWhite();
-
-				objectArray[objectIndex]->m_material->setStiffness(maxStiffness);
-				objectArray[objectIndex]->m_material->setSigma(sigmaArray[sigmaIndex]);
-				objectArray[objectIndex]->m_material->setZmax(zMaxArray[zMaxIndex]);
-				objectArray[objectIndex]->m_material->setZstick(zMaxArray[zMaxIndex] * zRatioArray[zRatioIndex]);
-				objectArray[objectIndex]->m_material->setHapticTriangleSides(true, false);
-
-				objectArray[objectIndex]->setEnabled(false, true);
+				int parameterIndex = sigmaIndex * NUM_ZMAX * NUM_ZRATIO + zMaxIndex * NUM_ZRATIO + zRatioIndex;
+				parameterArray[parameterIndex].sigma = sigmaArray[sigmaIndex];
+				parameterArray[parameterIndex].zMax = zMaxArray[zMaxIndex];
+				parameterArray[parameterIndex].zRatio = zRatioArray[zRatioIndex];
 			}
+
+	random_shuffle(std::begin(parameterArray), std::end(parameterArray));
+
+	for (int objectIndex = 0; objectIndex < NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO; objectIndex++)
+	{
+		double sigma = parameterArray[objectIndex].sigma;
+		double zMax = parameterArray[objectIndex].zMax;
+		double zStick = zMax * parameterArray[objectIndex].zRatio;
+
+		objectArray[objectIndex] = new cMesh();
+
+		cCreatePlane(objectArray[objectIndex], planeSize, planeSize);
+		objectArray[objectIndex]->createAABBCollisionDetector(toolRadius);
+		world->addChild(objectArray[objectIndex]);
+		objectArray[objectIndex]->setLocalPos(planeX, 0, planeZ);
+		///////////////////
+		objectArray[objectIndex]->m_texture = cTexture2d::create();
+		//////////////////
+		objectArray[objectIndex]->m_material->setWhite();
+
+		objectArray[objectIndex]->m_material->setStiffness(maxStiffness);
+		objectArray[objectIndex]->m_material->setSigma(sigma);
+		objectArray[objectIndex]->m_material->setZmax(zMax);
+		objectArray[objectIndex]->m_material->setZstick(zStick);
+		objectArray[objectIndex]->m_material->setHapticTriangleSides(true, false);
+
+		objectArray[objectIndex]->setEnabled(false, true);
+	}
+
     return result;
 }
 
