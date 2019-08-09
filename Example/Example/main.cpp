@@ -426,10 +426,6 @@ int main(int argc, char* argv[])
     textureInfoInit();
     loadTexture();
 
-    //Vib maker instance
-    //	myVM = new VibMaker();
-    //	myVM->init();
-
     //Subject info loading
     exp_load_subject_info();
 
