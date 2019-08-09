@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 
     cout << endl;
     cout << "-----------------------------------" << endl;
-    cout << "Friction rendering Test" << endl;
+    cout << "Friction absolute magnitude estimation experiment" << endl;
     cout << "-----------------------------------" << endl << endl << endl;
     cout << "[x] - Exit application" << endl;
     cout << endl << endl;
@@ -1024,13 +1024,13 @@ int loadTexture()
         object1[i]->m_material->setWhite();
 
         // set haptic properties
-        object0[i]->m_material->setStiffness(0.8 * maxStiffness);
+        object0[i]->m_material->setStiffness(maxStiffness);
         object0[i]->m_material->setSigma(sigma[i]);
         object0[i]->m_material->setZmax(zMax[i]);
         object0[i]->m_material->setZstick(zStick[i]);
         object0[i]->m_material->setHapticTriangleSides(true, false);
 
-        object1[i]->m_material->setStiffness(0.8 * maxStiffness);
+        object1[i]->m_material->setStiffness(maxStiffness);
         object1[i]->m_material->setSigma(sigma[i]);
         object1[i]->m_material->setZmax(zMax[i]);
         object1[i]->m_material->setZstick(zStick[i]);
