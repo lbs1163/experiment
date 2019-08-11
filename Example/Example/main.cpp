@@ -806,16 +806,75 @@ void updateGUI(void)
             float sigma = objectArray[trainingTexture]->m_material->getSigma();
             float zmax = objectArray[trainingTexture]->m_material->getZmax();
             float zstick = objectArray[trainingTexture]->m_material->getZstick();
-            string forceMagnitudeText;
+			float zratio = zstick / zmax;
+            string parameterInformationString;
             ostringstream strs;
-            strs << forceMagnitude;
-            forceMagnitudeText = "Force Magnitude: " + strs.str();
+			strs << "Sigma:" << sigma << "    zMax:" << zmax << "   zStick:" << zstick;
+			parameterInformationString = strs.str();
 
             
             ImGui::Begin("Friction Control Panel", 0, ImGuiWindowFlags_AlwaysAutoResize);                          // Create a window and append into it.
             ImGui::SameLine();
             ImGui::SetNextItemWidth(2000);
             ImGui::BeginGroup();
+
+			if (ImGui::Button("10", ImVec2(80, 30)))
+				sigma = 10;
+			ImGui::SameLine();
+			if (ImGui::Button("25", ImVec2(80, 30)))
+				sigma = 25;
+			ImGui::SameLine();
+			if (ImGui::Button("60", ImVec2(80, 30)))
+				sigma = 60;
+			ImGui::SameLine();
+			if (ImGui::Button("150", ImVec2(80, 30)))
+				sigma = 150;
+			ImGui::SameLine();
+			if (ImGui::Button("390", ImVec2(80, 30)))
+				sigma = 390;
+			ImGui::SameLine();
+			ImGui::Text("Sigma");
+
+			
+			if (ImGui::Button("3e-5", ImVec2(80, 30)))
+				zmax = 3e-5; zstick = zmax*zratio;
+			ImGui::SameLine();
+			if (ImGui::Button("1e-4", ImVec2(80, 30)))
+				zmax = 1e-4; zstick = zmax*zratio;
+			ImGui::SameLine();
+			if (ImGui::Button("3e-4", ImVec2(80, 30)))
+				zmax = 3e-4; zstick = zmax*zratio;
+			ImGui::SameLine();
+			if (ImGui::Button("1e-3", ImVec2(80, 30)))
+				zmax = 1e-3; zstick = zmax*zratio;
+			ImGui::SameLine();
+			if (ImGui::Button("3e-3", ImVec2(80, 30)))
+				zmax = 3e-3; zstick = zmax*zratio;
+			ImGui::SameLine();
+			if (ImGui::Button("1e-2", ImVec2(80, 30)))
+				zmax = 1e-2; zstick = zmax*zratio;
+			ImGui::SameLine();
+			ImGui::Text("zMax");
+
+
+			if (ImGui::Button("1.1", ImVec2(80, 30)))
+				zstick = 1.1*zmax;
+			ImGui::SameLine();
+			if (ImGui::Button("1.2", ImVec2(80, 30)))
+				zstick = 1.2*zmax;
+			ImGui::SameLine();
+			if (ImGui::Button("1.3", ImVec2(80, 30)))
+				zstick = 1.3*zmax;
+			ImGui::SameLine();
+			if (ImGui::Button("1.4", ImVec2(80, 30)))
+				zstick = 1.4*zmax;
+			ImGui::SameLine();
+			ImGui::Text("zRatio");
+
+			ImGui::Text(parameterInformationString.c_str());
+
+
+			/*
             ImGui::SliderFloat("Sigma", &sigma, 10.0f, 5000.0f, "%.4e");
             size = ImGui::GetItemRectSize();
             ImGui::SetNextItemWidth(2000);
@@ -823,6 +882,12 @@ void updateGUI(void)
             ImGui::SetNextItemWidth(2000);
             ImGui::SliderFloat("zStick", &zstick, 0.00001f, 0.1f, "%.4e");
             ImGui::Text(forceMagnitudeText.c_str());
+			*/
+
+
+
+
+
             ImGui::EndGroup();
             ImGui::SetNextItemWidth((float)size.x * 2 + ImGui::GetStyle().ItemSpacing.x);
             ImGui::End();
@@ -1131,7 +1196,7 @@ void exp_samp_change()
     {
         //Deactivate the previous models
         objectArray[trainingTexture]->setEnabled(false, true);
-        trainingTexture++;
+        trainingTexture = currentTrial;
         objectArray[trainingTexture]->setEnabled(true, true);
         cout << scientific;
         cout << "sigma: " << objectArray[trainingTexture]->m_material->getSigma() << " z_max: " << objectArray[trainingTexture]->m_material->getZmax() 
