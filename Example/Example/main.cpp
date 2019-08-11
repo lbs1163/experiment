@@ -873,21 +873,6 @@ void updateGUI(void)
 
 			ImGui::Text(parameterInformationString.c_str());
 
-
-			/*
-            ImGui::SliderFloat("Sigma", &sigma, 10.0f, 5000.0f, "%.4e");
-            size = ImGui::GetItemRectSize();
-            ImGui::SetNextItemWidth(2000);
-            ImGui::SliderFloat("zMax", &zmax, 0.00001f, 0.1f, "%.4e");
-            ImGui::SetNextItemWidth(2000);
-            ImGui::SliderFloat("zStick", &zstick, 0.00001f, 0.1f, "%.4e");
-            ImGui::Text(forceMagnitudeText.c_str());
-			*/
-
-
-
-
-
             ImGui::EndGroup();
             ImGui::SetNextItemWidth((float)size.x * 2 + ImGui::GetStyle().ItemSpacing.x);
             ImGui::End();
