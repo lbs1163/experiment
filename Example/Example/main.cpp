@@ -786,6 +786,11 @@ void updateGUI(void)
 			strs << "Sigma:" << sigma << "    zMax:" << zmax << "   zStick:" << zstick;
 			parameterInformationString = strs.str();
 
+            string forceMagnitudeText;
+            ostringstream strs2;
+            strs2 << forceMagnitude;
+            forceMagnitudeText = "Force Magnitude: " + strs2.str();
+
             
             ImGui::Begin("Friction Control Panel", 0, ImGuiWindowFlags_AlwaysAutoResize);                          // Create a window and append into it.
             ImGui::SameLine();
@@ -847,6 +852,21 @@ void updateGUI(void)
 
 			ImGui::Text(parameterInformationString.c_str());
 
+            ImGui::EndGroup();
+            ImGui::SetNextItemWidth((float)size.x * 2 + ImGui::GetStyle().ItemSpacing.x);
+            ImGui::End();
+
+            ImGui::Begin("Friction Control Panel 2", 0, ImGuiWindowFlags_AlwaysAutoResize);                          // Create a window and append into it.
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(2000);
+            ImGui::BeginGroup();
+            ImGui::SliderFloat("Sigma", &sigma, 10.0f, 5000.0f, "%.4e");
+            size = ImGui::GetItemRectSize();
+            ImGui::SetNextItemWidth(2000);
+            ImGui::SliderFloat("zMax", &zmax, 0.00001f, 0.1f, "%.4e");
+            ImGui::SetNextItemWidth(2000);
+            ImGui::SliderFloat("zStick", &zstick, 0.00001f, 0.1f, "%.4e");
+            ImGui::Text(forceMagnitudeText.c_str());
             ImGui::EndGroup();
             ImGui::SetNextItemWidth((float)size.x * 2 + ImGui::GetStyle().ItemSpacing.x);
             ImGui::End();
