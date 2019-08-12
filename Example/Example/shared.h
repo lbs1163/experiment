@@ -23,21 +23,12 @@
 #include "FOAW.h"
 #include <string>
 
-struct ExpSession {
-	int material;
-};
-
-struct ExpTraining {
-	int textureL;
-	int textureR;
-};
-
 struct ExpResponse {
 	char friction[64];
 };
 
 struct ExpSessionResponse {
-	struct ExpResponse resp[NUM_REPETITION];
+	struct ExpResponse resp;
 };
 
 extern std::string resourceRoot;

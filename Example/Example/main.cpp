@@ -33,21 +33,24 @@ using namespace std;
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "IconsFontAwesome5.h"
-#define NUM_TRAINING 10
-#define TEN 10
+
+#define NUM_TRAINING_SESSION 2
+#define NUM_SESSION 8
+#define NUM_TRIAL 40
 
 //-------------------
 //Experiment setting
 //-------------------
-struct ExpSession thisExp[TEN];
-struct ExpTraining thisTraining[NUM_TRAINING];
-struct ExpSessionResponse thisResponse[TEN];
-struct ExpResponse trainingResponse[NUM_TRAINING];
+struct ExpSessionResponse responseArray[NUM_SESSION][NUM_TRIAL];
+int objectNumberArray[NUM_SESSION][NUM_TRIAL];
 int currentSession = 0;
 int currentTrial = 0;
-char currentResponse1[64] = "";
-char currentResponse2[64] = "";
-char currentResponse3[64] = "";
+
+
+
+
+
+
 //------------------------------------------------------------------------------
 // GENERAL SETTINGS
 //------------------------------------------------------------------------------
@@ -178,11 +181,8 @@ int exp_next();
 int exp_prev();
 void exp_start();
 void exp_samp_change();
-void exp_load_subject_info();
-void exp_make_new_order();
-void exp_load_exp_order();
 void exp_save_response();
-void exp_training_prep();
+
 
 double sigmaArray[NUM_SIGMA] = { 1.0E+1, 2.5E+1, 6.0E+1, 1.5E+2, 3.9E+2 };
 double zMaxArray[NUM_ZMAX] = { 3.0E-5, 1.0E-4, 3.0E-4, 1.0E-3, 3.0E-3, 1.0E-2 };
@@ -425,9 +425,6 @@ int main(int argc, char* argv[])
     //Texture info
     loadTexture();
 
-    //Subject info loading
-    exp_load_subject_info();
-
     //--------------------------------------------------------------------------
     // WIDGETS
     //--------------------------------------------------------------------------
@@ -633,8 +630,8 @@ void updateGUI(void)
     if (!experimentRunning)	//Start GUI
     {
         ImGui::Begin("Friction Experiment", 0, ImGuiWindowFlags_AlwaysAutoResize);                          // Create a window and append into it.
-        ImGui::Text("Please Select Your Subject Number.");
-        ImGui::AlignTextToFramePadding(); ImGui::Text("Subject");
+        ImGui::Text("                                     ");
+        ImGui::Text("Subject");
         ImGui::SameLine();
         ImGui::SetNextItemWidth(100);
         ImGui::Combo("##Subject", &numCurrentSubject, subjectItems, numTotalSubject);
@@ -644,14 +641,7 @@ void updateGUI(void)
         ImGui::SameLine();
         if (ImGui::Button("Start", ImVec2(80, size.y)))
             ImGui::OpenPopup("Training Session");
-        ImGui::SameLine();
-        if (ImGui::Button("New", ImVec2(80, size.y)))
-        {
-            exp_make_new_order();
-            ImGui::OpenPopup("New Subject");
-            exp_load_subject_info();
-            numCurrentSubject = numTotalSubject - 1;
-        }
+               
         if (ImGui::BeginPopupModal("Training Session", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::Text("Four training trials will be given");
@@ -662,24 +652,11 @@ void updateGUI(void)
             if (ImGui::Button("OK", ImVec2(80, size.y)))
             {
                 ImGui::CloseCurrentPopup();
-                exp_load_exp_order();
                 exp_start();
             }
             ImGui::EndPopup();
         }
 
-        if (ImGui::BeginPopupModal("New Subject", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-        {
-            ImGui::Text("New subject added.");
-            ImVec2 size3 = ImGui::GetContentRegionAvail();
-            ImGui::Dummy(ImVec2((size3.x - 80 - 2 * ImGui::GetStyle().ItemSpacing.x) / 2.0, size3.y));
-            ImGui::SameLine();
-            if (ImGui::Button("OK", ImVec2(80, size.y)))
-            {
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::EndPopup();
-        }
         ImGui::End();
     }
 
@@ -695,10 +672,7 @@ void updateGUI(void)
 
         ImGui::BeginGroup();
         ImGui::PushItemWidth(size.x);
-        if (isTraining)
-            ImGui::InputText("##F", trainingResponse[currentTrial].friction, 64);
-        else
-            ImGui::InputText("##F", thisResponse[currentSession].resp[currentTrial].friction, 64);
+		ImGui::InputText("##F", responseArray[currentSession][currentTrial].resp.friction, 64);
         ImGui::PopItemWidth();
         ImGui::EndGroup();
         ImGui::Dummy(ImVec2(0.0f, 20.0f));
@@ -886,10 +860,11 @@ void updateGUI(void)
         ImGui::Begin("Exp. Progress", 0, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::PushFont(GUIfont2);
         string progress;
-        if (isTraining)
-            progress = "Training " + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_TRAINING);
-        else
-            progress = "Main Exp. " + std::to_string(currentSession + 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO) + "-" + std::to_string(NUM_REPETITION);
+
+		if (isTraining)
+			progress = "Training " + std::to_string(currentSession + 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO / 3);
+		else
+			progress = "Main Exp. " + std::to_string(currentSession - 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO / 3);
         ImVec2 textSize = ImGui::CalcTextSize(progress.c_str());
         ImGui::SetCursorPosX((420 - textSize.x) / 2);
         ImGui::Text(progress.c_str());
@@ -926,16 +901,8 @@ void updateHaptics(void)
 
         if (experimentRunning && isSampleReady)	//Render force and vibration only when the experiment is in running
         {
-            if (isTraining && tool->isInContact(objectArray[trainingTexture]))
-            {
-                objectArray[trainingTexture]->m_material->setUseHapticTexture(true);
+            if (tool->isInContact(objectArray[trainingTexture]))
                 outputRender = true;
-            }
-            else if (!isTraining && tool->isInContact(objectArray[textNum]))
-            {
-                objectArray[textNum]->m_material->setUseHapticTexture(true);
-                outputRender = true;
-            }
         }
 
         if (outputRender)
@@ -1030,125 +997,80 @@ int loadTexture()
 				objectArray[objectIndex]->setEnabled(false, true);
 			}
 
+	int temp[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO];
+	for (int index = 0; index < NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO; index++)
+		temp[index] = index;
+	random_shuffle(std::begin(temp), std::end(temp));
+	memcpy(objectNumberArray[0], temp, 80 * sizeof(int));
+	random_shuffle(std::begin(temp), std::end(temp));
+	memcpy(objectNumberArray[2], temp, 120 * sizeof(int));
+	random_shuffle(std::begin(temp), std::end(temp));
+	memcpy(objectNumberArray[5], temp, 120 * sizeof(int));
+
     return result;
 }
 
 int exp_prev()
 {
-    if (isTraining)
-    {
-        if (!(tool->isInContact(objectArray[trainingTexture])))
-        {
-            if (currentTrial > 0)
-            {
-                currentTrial--;
-                exp_samp_change();
-                // Successful change
-                return 1;
-            }
-            else
-            {
-                // First sample, can not go foward
-                return 0;
-            }
-        }
-        else
-        {
-            // Now touching
-            return -1;
-        }
-    }
-    else
-    {
-        if (!(tool->isInContact(objectArray[textNum])))
-        {
-            if (currentTrial > 0)
-            {
-                currentTrial--;
-                // Successful change
-                return 1;
-            }
-            else
-            {
-                // First sample, can not go foward
-                return 0;
-            }
-        }
-        else
-        {
-            // Now touching
-            return -1;
-        }
-    }
+	if (!(tool->isInContact(objectArray[trainingTexture])))
+	{
+		if (currentTrial > 0)
+		{
+			currentTrial--;
+			exp_samp_change();
+			// Successful change
+			return 1;
+		}
+		else
+		{
+			// First sample, can not go foward
+			return 0;
+		}
+	}
+	else
+	{
+		// Now touching
+		return -1;
+	}
 }
 
 int exp_next()
 {
-    if (isTraining)
-    {
-        if (!(tool->isInContact(objectArray[trainingTexture])))
-        {
-            currentTrial++;
-            if (currentTrial >= NUM_TRAINING)
-            {
-                // Finish the training
-                currentTrial = 0;
-                isTraining = false;
-                objectArray[trainingTexture]->setEnabled(false, true);
-                exp_samp_change();
-                // End of training
-                return 3;
-            }
-            else
-            {
-                exp_samp_change();
-                // Successful change
-                return 1;
-            }
-        }
-        else
-        {
-            // Now touching
-            return -1;
-        }
-    }
-    else
-    {
-        if (!(tool->isInContact(objectArray[textNum])))
-        {
-            currentTrial++;
-            if (currentTrial >= NUM_REPETITION)
-            {
-                currentSession++;
-                currentTrial = 0;
-                if (currentSession >= NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO)
-                {
-                    currentSession--;
-                    currentTrial = NUM_REPETITION - 1;
-                    // Save the response
-                    exp_save_response();
-                    // End of samples. Finish experiment
-                    return 0;
-                }
-                else
-                {
-                    exp_samp_change();
-                    // Successful Session change
-                    return 2;
-                }
-            }
-            else
-            {
-                // Successful Trial change
-                return 1;
-            }
-        }
-        else
-        {
-            // Now touching
-            return -1;
-        }
-    }
+	if (!(tool->isInContact(objectArray[trainingTexture])))
+	{
+		currentTrial++;
+		if (currentTrial >= NUM_TRIAL)
+		{
+			currentSession++;
+			currentTrial = 0;
+			if (currentSession >= NUM_SESSION)
+			{
+				// End of the experiment
+				currentSession--;
+				currentTrial = NUM_TRIAL - 1;
+				exp_save_response();
+				return 0;
+			}
+
+			exp_samp_change();
+			if (currentSession == NUM_TRAINING_SESSION)
+			{
+				// End of the training
+				isTraining = false;
+				return 3;
+			}
+			// Successful session change
+			return 2;
+		}
+		else
+		{
+			// Successful trial change
+			exp_samp_change();
+			return 1;
+		}
+	}
+	else
+		return -1;
 }
 
 void exp_start()
@@ -1157,7 +1079,6 @@ void exp_start()
     {
         experimentRunning = true;
         cout << "Experiment started." << endl;
-        exp_training_prep();
         exp_samp_change();
         //	myVM->startVibration();
     }
@@ -1167,131 +1088,22 @@ void exp_samp_change()
 {
     isSampleReady = true;
 
-    if (isTraining)
-    {
-        //Deactivate the previous models
-        objectArray[trainingTexture]->setEnabled(false, true);
-        trainingTexture = currentTrial;
-        objectArray[trainingTexture]->setEnabled(true, true);
-        cout << scientific;
-        cout << "sigma: " << objectArray[trainingTexture]->m_material->getSigma() << " z_max: " << objectArray[trainingTexture]->m_material->getZmax() 
-			<< " z_stick: " << objectArray[trainingTexture]->m_material->getZstick() << endl << endl;
-    }
-    else
-    {
-        //Deactivate the previous models
-        objectArray[textNum]->setEnabled(false, true);
-        textNum = thisExp[currentSession].material;
-        //Activate the next models
-        objectArray[textNum]->setUseTexture(false);
-        objectArray[textNum]->setEnabled(true, true);
-        cout << "sigma: " << objectArray[textNum]->m_material->getSigma() << " z_max: " << objectArray[textNum]->m_material->getZmax()
-			<< " z_stick: " << objectArray[textNum]->m_material->getZstick() << endl << endl;
-    }
+    //Deactivate the previous models
+	objectArray[trainingTexture]->setEnabled(false, true);
+	trainingTexture = objectNumberArray[currentSession][currentTrial];
+	objectArray[trainingTexture]->setEnabled(true, true);
+	cout << scientific;
+	cout << "sigma: " << objectArray[trainingTexture]->m_material->getSigma() << " z_max: " << objectArray[trainingTexture]->m_material->getZmax() 
+		<< " z_stick: " << objectArray[trainingTexture]->m_material->getZstick() << endl << endl;
 }
 
-void exp_load_subject_info()
-{
-    ifstream sub_info("exp/data.txt");
-    string str;
-    if (sub_info.fail())
-        cout << "fail" << endl;
-    sub_info >> numTotalSubject;
-    subjectItems = new char*[numTotalSubject];
-
-    for (int i = 0; i < numTotalSubject; i++)
-    {
-        sub_info >> str;
-        subjectItems[i] = new char[100];
-        strcpy(subjectItems[i], str.c_str());
-    }
-    sub_info.close();
-}
-
-void exp_make_new_order()
-{
-    srand((unsigned int)time(NULL));
-    //Init check counter
-    int checkS[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO] = { 0, };
-
-    //Make experiment trial order
-    struct ExpSession newExp[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO];
-    for (int i = 0; i < NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO; i++)
-    {
-        int currentT;
-        do
-        {
-            currentT = rand() % (NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO);
-        } while (checkS[currentT] != 0);
-
-        checkS[currentT] = 1;
-        newExp[i].material = currentT;
-    }
-
-    // Save the new experiment order
-    ofstream sub_info("exp/data.txt");
-    sub_info << ++numTotalSubject << endl;
-    for (int i = 0; i < numTotalSubject; i++)
-    {
-        sub_info << 'S' << i + 1 << endl;
-    }
-    sub_info.close();
-
-    string filename;
-    filename = "exp/S" + std::to_string(numTotalSubject) + ".txt";
-    ofstream newOrder(filename);
-    for (int i = 0; i < NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO; i++)
-        newOrder << newExp[i].material << endl;
-    newOrder.close();
-}
-
-void exp_load_exp_order()
-{
-    string filename;
-    filename = "exp/S" + std::to_string(numCurrentSubject + 1) + ".txt";
-    ifstream order(filename);
-    std::string str;
-    std::string buf;
-    std::stringstream ss;
-    std::vector<std::string> tokens;
-    int cnt = 0;
-
-    for (int i = 0; i < TEN; i++)
-    {
-        getline(order, str);
-        //std::cout << str << "ENDL" << std::endl;
-        ss << str;
-        while (ss >> buf)
-            tokens.push_back(buf);
-        for (std::vector<std::string>::iterator it = tokens.begin(); it != tokens.end(); it++)
-        {
-            //std::cout << *it << ", ";
-            if (cnt == 0)
-            {
-                thisExp[i].material = std::stoi(*it);
-            }
-            cnt++;
-            //std::cout <<cnt << std::endl;
-        }
-        //std::cout << std::endl;
-        ss.clear();
-        tokens.clear();
-        cnt = 0;
-
-        for (int j = 0; j < NUM_REPETITION; j++)
-        {
-            //Initialize response
-            strcpy(thisResponse[i].resp[j].friction, "0");
-        }
-    }
-}
 
 void exp_save_response()
 {
     string filename;
     filename = "exp/R" + std::to_string(numCurrentSubject + 1) + ".txt";
     ofstream response(filename);
-
+	/*
     for (int i = 0; i < TEN; i++)
     {
         for (int j = 0; j < NUM_REPETITION; j++)
@@ -1299,20 +1111,6 @@ void exp_save_response()
             response << thisExp[i].material << ' ' << thisResponse[i].resp[j].friction << endl;
         }
     }
+	*/
     response.close();
 }
-
-void exp_training_prep()
-{
-    thisTraining[0] = { 0,0 };
-    thisTraining[1] = { 1,1 };
-    thisTraining[2] = { 2,2 };
-    thisTraining[3] = { 3,3 };
-    thisTraining[4] = { 4,4 };
-    thisTraining[5] = { 5,5 };
-    thisTraining[6] = { 6,6 };
-    thisTraining[7] = { 7,7 };
-    thisTraining[8] = { 8,8 };
-    thisTraining[9] = { 9,9 };
-}
-
