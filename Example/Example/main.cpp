@@ -379,7 +379,7 @@ int main(int argc, char* argv[])
     tool->setHapticDevice(hapticDevice);
 
     // hide the device sphere. only show proxy.
-    tool->setShowContactPoints(true, false);
+    tool->setShowContactPoints(true, true);
 
     // set color of tool
     tool->m_hapticPoint->m_sphereProxy->m_material->setBlack();

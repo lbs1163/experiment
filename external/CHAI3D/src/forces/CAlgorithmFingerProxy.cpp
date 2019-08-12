@@ -1122,8 +1122,7 @@ namespace chai3d {
 
 			}
 			else {
-				Yk = cDistance(a_goal, m_prevProxyPos);
-
+				Yk = cDistance(m_FrictionProxyPos, m_proxyGlobalPos);
 			}
 			cVector3d temp;
 			Zvector.mulr(Yk *alpha, temp);
