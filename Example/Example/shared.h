@@ -10,7 +10,7 @@
 #define NUM_SIGMA 5
 #define NUM_ZMAX 6
 #define NUM_ZRATIO 4
-#define NUM_REPETITION 3
+#define NUM_REPETITION 2
 
 #define IM_SIZE 3145728
 #define MAX_NUM_RBF 4000

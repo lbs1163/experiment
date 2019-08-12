@@ -35,6 +35,7 @@ using namespace std;
 #include "IconsFontAwesome5.h"
 
 #define NUM_TRAINING_SESSION 2
+#define NUM_EXPERIMENT_SESSION 3
 #define NUM_SESSION 8
 #define NUM_TRIAL 40
 
@@ -1103,14 +1104,22 @@ void exp_save_response()
     string filename;
     filename = "exp/R" + std::to_string(numCurrentSubject + 1) + ".txt";
     ofstream response(filename);
-	/*
-    for (int i = 0; i < TEN; i++)
-    {
-        for (int j = 0; j < NUM_REPETITION; j++)
-        {
-            response << thisExp[i].material << ' ' << thisResponse[i].resp[j].friction << endl;
-        }
-    }
-	*/
+	vector<pair<int, string>> responseVector;
+
+	for (int experimentIndex = 0; experimentIndex < NUM_REPETITION; experimentIndex++)
+	{
+		for (int sessionCount = 0; sessionCount < NUM_EXPERIMENT_SESSION; sessionCount++)
+			for (int trialIndex = 0; trialIndex < NUM_TRIAL; trialIndex++)
+			{
+				int sessionIndex = NUM_TRAINING_SESSION + experimentIndex * NUM_EXPERIMENT_SESSION + sessionCount;
+				int objectNumber = objectNumberArray[sessionIndex][trialIndex];
+				string responseValue(responseArray[sessionIndex][trialIndex].resp.friction);
+				responseVector.push_back(pair<int, string>(objectNumber, responseValue));
+			}
+		sort(responseVector.begin(), responseVector.end());
+		for (auto iter = responseVector.begin(); iter != responseVector.end(); iter++)
+			response << "[" << iter->first << ":" << iter->second << "]" << endl;
+	}
+
     response.close();
 }
