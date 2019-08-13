@@ -141,6 +141,7 @@ cMesh* objectArray[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO];
 
 bool isSampleReady = false;
 bool isTraining = true;
+bool goToNextTexture = false;
 bool showControlPanel = false;
 int trainingTexture = 0;
 
@@ -547,6 +548,11 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
     {
         exp_save_response();
     }
+
+	else if (a_key == GLFW_KEY_ENTER)
+	{
+		goToNextTexture = true;
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -673,6 +679,8 @@ void updateGUI(void)
 
         ImGui::BeginGroup();
         ImGui::PushItemWidth(size.x);
+		if (ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+			ImGui::SetKeyboardFocusHere(0);
 		ImGui::InputText("##F", responseArray[currentSession][currentTrial].resp.friction, 64);
         ImGui::PopItemWidth();
         ImGui::EndGroup();
@@ -693,9 +701,10 @@ void updateGUI(void)
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Next\n  " ICON_FA_ARROW_ALT_CIRCLE_RIGHT, ImVec2((size2.x - ImGui::GetStyle().ItemSpacing.x)*0.5f, size.y * 2)))
+        if (goToNextTexture || ImGui::Button("Next\n  " ICON_FA_ARROW_ALT_CIRCLE_RIGHT, ImVec2((size2.x - ImGui::GetStyle().ItemSpacing.x)*0.5f, size.y * 2)))
         {
             int result;
+			goToNextTexture = false;
             result = exp_next();
             switch (result)
             {
