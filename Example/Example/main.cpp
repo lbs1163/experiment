@@ -137,7 +137,7 @@ double maxLinearDamping;
 double maxStiffness;
 
 //texture object
-cMesh* objectArray[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO];
+cMesh* objectArray[NUM_MULTIPLIED_FACTOR * NUM_ZMAX * NUM_ZRATIO];
 
 bool isSampleReady = false;
 bool isTraining = true;
@@ -186,7 +186,7 @@ void exp_samp_change();
 void exp_save_response();
 
 
-double sigmaArray[NUM_SIGMA] = { 1.0E+1, 2.5E+1, 6.0E+1, 1.5E+2, 3.9E+2 };
+double multipliedFactorArray[NUM_MULTIPLIED_FACTOR] = { 5E-2, 1E-1, 2E-1, 4E-1, 1, 2 };
 double zMaxArray[NUM_ZMAX] = { 3.0E-5, 1.0E-4, 3.0E-4, 1.0E-3, 3.0E-3, 1.0E-2 };
 double zRatioArray[NUM_ZRATIO] = { 1.1, 1.2, 1.3, 1.4 };
 
@@ -790,6 +790,7 @@ void updateGUI(void)
             float zmax = objectArray[trainingTexture]->m_material->getZmax();
             float zstick = objectArray[trainingTexture]->m_material->getZstick();
 			float zratio = zstick / zmax;
+            float multipliedFactor = sigma * zmax;
             string parameterInformationString;
             ostringstream strs;
 			strs << "Sigma:" << sigma << "    zMax:" << zmax << "   zStick:" << zstick;
@@ -803,44 +804,76 @@ void updateGUI(void)
             
             ImGui::Begin("Friction Control Panel", 0, ImGuiWindowFlags_AlwaysAutoResize);                          // Create a window and append into it.
             ImGui::SameLine();
-            ImGui::SetNextItemWidth(2000);
+            ImGui::SetNextItemWidth(2300);
             ImGui::BeginGroup();
 
-			if (ImGui::Button("10", ImVec2(80, 30)))
-				sigma = 10;
+			if (ImGui::Button("0.05", ImVec2(80, 30)))
+				sigma = 0.05 / zmax;
 			ImGui::SameLine();
-			if (ImGui::Button("25", ImVec2(80, 30)))
-				sigma = 25;
+			if (ImGui::Button("0.1", ImVec2(80, 30)))
+				sigma = 0.1 / zmax;
 			ImGui::SameLine();
-			if (ImGui::Button("60", ImVec2(80, 30)))
-				sigma = 60;
+			if (ImGui::Button("0.2", ImVec2(80, 30)))
+				sigma = 0.2 / zmax;
 			ImGui::SameLine();
-			if (ImGui::Button("150", ImVec2(80, 30)))
-				sigma = 150;
+			if (ImGui::Button("0.4", ImVec2(80, 30)))
+				sigma = 0.4 / zmax;
 			ImGui::SameLine();
-			if (ImGui::Button("390", ImVec2(80, 30)))
-				sigma = 390;
+			if (ImGui::Button("1", ImVec2(80, 30)))
+				sigma = 1 / zmax;
+            ImGui::SameLine();
+            if (ImGui::Button("2", ImVec2(80, 30)))
+                sigma = 2 / zmax;
+                
 			ImGui::SameLine();
-			ImGui::Text("Sigma");
+			ImGui::Text("multipliedFactor");
 
 			
-			if (ImGui::Button("3e-5", ImVec2(80, 30)))
-				zmax = 3e-5; zstick = zmax*zratio;
+            if (ImGui::Button("3e-5", ImVec2(80, 30)))
+            {
+                zmax = 3e-5; 
+                zstick = zmax*zratio; 
+                sigma = multipliedFactor / zmax;
+            }
+                
 			ImGui::SameLine();
-			if (ImGui::Button("1e-4", ImVec2(80, 30)))
-				zmax = 1e-4; zstick = zmax*zratio;
+            if (ImGui::Button("1e-4", ImVec2(80, 30))) 
+            {
+                zmax = 1e-4; 
+                zstick = zmax*zratio; 
+                sigma = multipliedFactor / zmax;
+            }
+				
 			ImGui::SameLine();
-			if (ImGui::Button("3e-4", ImVec2(80, 30)))
-				zmax = 3e-4; zstick = zmax*zratio;
+            if (ImGui::Button("3e-4", ImVec2(80, 30))) 
+            {
+                zmax = 3e-4; 
+                zstick = zmax*zratio; 
+                sigma = multipliedFactor / zmax;
+            }
+				
 			ImGui::SameLine();
-			if (ImGui::Button("1e-3", ImVec2(80, 30)))
-				zmax = 1e-3; zstick = zmax*zratio;
+            if (ImGui::Button("1e-3", ImVec2(80, 30)))
+            {
+                zmax = 1e-3; 
+                zstick = zmax*zratio; 
+                sigma = multipliedFactor / zmax;
+            }
+				
 			ImGui::SameLine();
-			if (ImGui::Button("3e-3", ImVec2(80, 30)))
-				zmax = 3e-3; zstick = zmax*zratio;
+            if (ImGui::Button("3e-3", ImVec2(80, 30)))
+            {
+                zmax = 3e-3; 
+                zstick = zmax*zratio; 
+                sigma = multipliedFactor / zmax;
+            }
 			ImGui::SameLine();
-			if (ImGui::Button("1e-2", ImVec2(80, 30)))
-				zmax = 1e-2; zstick = zmax*zratio;
+            if (ImGui::Button("1e-2", ImVec2(80, 30)))
+            {
+                zmax = 1e-2; 
+                zstick = zmax*zratio; 
+                sigma = multipliedFactor / zmax;
+            }
 			ImGui::SameLine();
 			ImGui::Text("zMax");
 
@@ -892,9 +925,9 @@ void updateGUI(void)
         string progress;
 
 		if (isTraining)
-			progress = "Training " + std::to_string(currentSession + 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO / 3);
+			progress = "Training " + std::to_string(currentSession + 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_MULTIPLIED_FACTOR * NUM_ZMAX * NUM_ZRATIO / 3);
 		else
-			progress = "Main Exp. " + std::to_string(currentSession - 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO / 3);
+			progress = "Main Exp. " + std::to_string(currentSession - 1) + "-" + std::to_string(currentTrial + 1) + "/" + std::to_string(NUM_MULTIPLIED_FACTOR * NUM_ZMAX * NUM_ZRATIO / 3);
         ImVec2 textSize = ImGui::CalcTextSize(progress.c_str());
         ImGui::SetCursorPosX((420 - textSize.x) / 2);
         ImGui::Text(progress.c_str());
@@ -998,14 +1031,14 @@ int loadTexture()
 {
     int result = 0;
 
-	for (int sigmaIndex = 0; sigmaIndex < NUM_SIGMA; sigmaIndex++)
+	for (int multipliedFactorIndex = 0; multipliedFactorIndex < NUM_MULTIPLIED_FACTOR; multipliedFactorIndex++)
 		for (int zMaxIndex = 0; zMaxIndex < NUM_ZMAX; zMaxIndex++)
 			for (int zRatioIndex = 0; zRatioIndex < NUM_ZRATIO; zRatioIndex++)
 			{
-				double sigma = sigmaArray[sigmaIndex];
 				double zMax = zMaxArray[zMaxIndex];
 				double zStick = zMax * zRatioArray[zRatioIndex];
-				int objectIndex = sigmaIndex * NUM_ZMAX * NUM_ZRATIO + zMaxIndex * NUM_ZRATIO + zRatioIndex;
+                double sigma = multipliedFactorArray[multipliedFactorIndex] / zMax;
+				int objectIndex = multipliedFactorIndex * NUM_ZMAX * NUM_ZRATIO + zMaxIndex * NUM_ZRATIO + zRatioIndex;
 
 				objectArray[objectIndex] = new cMesh();
 				
@@ -1027,8 +1060,8 @@ int loadTexture()
 				objectArray[objectIndex]->setEnabled(false, true);
 			}
 
-	int temp[NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO];
-	for (int index = 0; index < NUM_SIGMA * NUM_ZMAX * NUM_ZRATIO; index++)
+	int temp[NUM_MULTIPLIED_FACTOR * NUM_ZMAX * NUM_ZRATIO];
+	for (int index = 0; index < NUM_MULTIPLIED_FACTOR * NUM_ZMAX * NUM_ZRATIO; index++)
 		temp[index] = index;
 	random_shuffle(std::begin(temp), std::end(temp));
 	memcpy(objectNumberArray[0], temp, 80 * sizeof(int));

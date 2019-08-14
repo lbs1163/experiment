@@ -7,7 +7,7 @@
 #define MAX_MACOEFF 25
 
 #define NUM_TEX 10
-#define NUM_SIGMA 5
+#define NUM_MULTIPLIED_FACTOR 6
 #define NUM_ZMAX 6
 #define NUM_ZRATIO 4
 #define NUM_REPETITION 2
