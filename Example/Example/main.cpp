@@ -918,7 +918,7 @@ void updateGUI(void)
             objectArray[trainingTexture]->m_material->setZstick(zstick);
         }
 
-        ImGui::SetNextWindowPos(ImVec2(750, 200));
+        //ImGui::SetNextWindowPos(ImVec2(750, 200));
         ImGui::SetNextWindowSize(ImVec2(420, 100));
         ImGui::Begin("Exp. Progress", 0, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::PushFont(GUIfont2);
