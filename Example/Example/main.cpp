@@ -47,11 +47,6 @@ int objectNumberArray[NUM_SESSION][NUM_TRIAL];
 int currentSession = 0;
 int currentTrial = 0;
 
-
-
-
-
-
 //------------------------------------------------------------------------------
 // GENERAL SETTINGS
 //------------------------------------------------------------------------------
@@ -387,7 +382,7 @@ int main(int argc, char* argv[])
     tool->setHapticDevice(hapticDevice);
 
     // hide the device sphere. only show proxy.
-    tool->setShowContactPoints(true, true);
+    tool->setShowContactPointsFriction(false, false, true);
 
     // set color of tool
     tool->m_hapticPoint->m_sphereProxy->m_material->setBlack();
