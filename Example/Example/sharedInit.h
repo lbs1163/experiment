@@ -4,10 +4,10 @@
 std::string resourceRoot;
 
 //Texture samples position
-double planeX = 0.0;
+double planeX = -0.05;
 double planeY = -0.06;
-double planeZ = 0.05;
-double planeSize = 0.10; //Size of textured plane: 0.1 m for each side
+double planeZ = -0.02;
+double planeSize = 0.25; //Size of textured plane: 0.2 m for each side
 
 
 float filtLSF[200][MAX_COEFF];

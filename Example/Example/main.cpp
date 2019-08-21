@@ -35,9 +35,9 @@ using namespace std;
 #include "IconsFontAwesome5.h"
 
 #define NUM_TRAINING_SESSION 2
-#define NUM_EXPERIMENT_SESSION 3
-#define NUM_SESSION 8
-#define NUM_TRIAL 40
+#define NUM_EXPERIMENT_SESSION 4
+#define NUM_SESSION 10
+#define NUM_TRIAL 31
 
 //-------------------
 //Experiment setting
@@ -128,6 +128,7 @@ int swapInterval = 1;
 
 int numTotalSubject;
 int numCurrentSubject;
+char subjectName[50];
 char** subjectItems;
 
 // root resource path
@@ -137,7 +138,7 @@ double maxLinearDamping;
 double maxStiffness;
 
 //texture object
-cMesh* objectArray[NUM_MULTIPLIED_FACTOR * NUM_ZMAX * NUM_ZRATIO];
+vector<cMesh*> objectVector;
 
 bool isSampleReady = false;
 bool isTraining = true;
@@ -186,10 +187,16 @@ void exp_samp_change();
 void exp_save_response();
 
 
-double multipliedFactorArray[NUM_MULTIPLIED_FACTOR] = { 5E-2, 1E-1, 2E-1, 4E-1, 1, 2 };
+double multipliedFactorArray[NUM_MULTIPLIED_FACTOR] = { 5E-2, 1E-1, 2E-1, 4E-1, 1, 1.5 };
 double zMaxArray[NUM_ZMAX] = { 3.0E-5, 1.0E-4, 3.0E-4, 1.0E-3, 3.0E-3, 1.0E-2 };
-double zRatioArray[NUM_ZRATIO] = { 1.1, 1.2, 1.3, 1.4 };
+double zRatioArray[NUM_ZRATIO] = { 1.1, 1.4, 1.7, 2.0 };
 
+typedef struct {
+    double multipliedFactor;
+    double zMax;
+}comb;
+
+comb badComboArray[5] = { {1.5, 3.0E-5}, {1.5, 1.0E-4}, {1.5, 3.0E-4}, {1, 3.0E-5}, {1, 1.0E-4} };
 
 int main(int argc, char* argv[])
 {
@@ -641,7 +648,7 @@ void updateGUI(void)
         ImGui::Text("Subject");
         ImGui::SameLine();
         ImGui::SetNextItemWidth(100);
-        ImGui::Combo("##Subject", &numCurrentSubject, subjectItems, numTotalSubject);
+        ImGui::InputText("##Subjct", subjectName, 50);
         ImVec2 size = ImGui::GetItemRectSize();
         ImVec2 size2 = ImGui::GetContentRegionAvail();
         ImGui::Dummy(ImVec2((size2.x - 3.0 * ImGui::GetStyle().ItemSpacing.x - 160) / 2.0, 0.0f));
@@ -718,6 +725,8 @@ void updateGUI(void)
             case -1:
                 ImGui::OpenPopup("Error1");
                 break;
+            case -3:
+                ImGui::OpenPopup("Error3");
             }
         }
         if (!isSampleReady)
@@ -737,6 +746,18 @@ void updateGUI(void)
         if (ImGui::BeginPopupModal("Error2", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::Text("There is no previous texture.");
+            ImVec2 size3 = ImGui::GetContentRegionAvail();
+            ImGui::Dummy(ImVec2((size3.x - 80 - 2 * ImGui::GetStyle().ItemSpacing.x) / 2.0, 0));
+            ImGui::SameLine();
+            if (ImGui::Button("OK", ImVec2(80, 30)))
+            {
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::EndPopup();
+        }
+        if (ImGui::BeginPopupModal("Error3", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("You should give a response.");
             ImVec2 size3 = ImGui::GetContentRegionAvail();
             ImGui::Dummy(ImVec2((size3.x - 80 - 2 * ImGui::GetStyle().ItemSpacing.x) / 2.0, 0));
             ImGui::SameLine();
@@ -786,9 +807,9 @@ void updateGUI(void)
         if (showControlPanel)
         {
 
-            float sigma = objectArray[trainingTexture]->m_material->getSigma();
-            float zmax = objectArray[trainingTexture]->m_material->getZmax();
-            float zstick = objectArray[trainingTexture]->m_material->getZstick();
+            float sigma = objectVector[trainingTexture]->m_material->getSigma();
+            float zmax = objectVector[trainingTexture]->m_material->getZmax();
+            float zstick = objectVector[trainingTexture]->m_material->getZstick();
 			float zratio = zstick / zmax;
             float multipliedFactor = sigma * zmax;
             string parameterInformationString;
@@ -822,8 +843,8 @@ void updateGUI(void)
 			if (ImGui::Button("1", ImVec2(80, 30)))
 				sigma = 1 / zmax;
             ImGui::SameLine();
-            if (ImGui::Button("2", ImVec2(80, 30)))
-                sigma = 2 / zmax;
+            if (ImGui::Button("1.5", ImVec2(80, 30)))
+                sigma = 1.5 / zmax;
                 
 			ImGui::SameLine();
 			ImGui::Text("multipliedFactor");
@@ -881,14 +902,14 @@ void updateGUI(void)
 			if (ImGui::Button("1.1", ImVec2(80, 30)))
 				zstick = 1.1*zmax;
 			ImGui::SameLine();
-			if (ImGui::Button("1.2", ImVec2(80, 30)))
-				zstick = 1.2*zmax;
-			ImGui::SameLine();
-			if (ImGui::Button("1.3", ImVec2(80, 30)))
-				zstick = 1.3*zmax;
-			ImGui::SameLine();
 			if (ImGui::Button("1.4", ImVec2(80, 30)))
 				zstick = 1.4*zmax;
+			ImGui::SameLine();
+			if (ImGui::Button("1.7", ImVec2(80, 30)))
+				zstick = 1.7*zmax;
+			ImGui::SameLine();
+			if (ImGui::Button("2.0", ImVec2(80, 30)))
+				zstick = 2.0*zmax;
 			ImGui::SameLine();
 			ImGui::Text("zRatio");
 
@@ -913,9 +934,9 @@ void updateGUI(void)
             ImGui::SetNextItemWidth((float)size.x * 2 + ImGui::GetStyle().ItemSpacing.x);
             ImGui::End();
             
-            objectArray[trainingTexture]->m_material->setSigma(sigma);
-            objectArray[trainingTexture]->m_material->setZmax(zmax);
-            objectArray[trainingTexture]->m_material->setZstick(zstick);
+            objectVector[trainingTexture]->m_material->setSigma(sigma);
+            objectVector[trainingTexture]->m_material->setZmax(zmax);
+            objectVector[trainingTexture]->m_material->setZstick(zstick);
         }
 
         //ImGui::SetNextWindowPos(ImVec2(750, 200));
@@ -964,7 +985,7 @@ void updateHaptics(void)
 
         if (experimentRunning && isSampleReady)	//Render force and vibration only when the experiment is in running
         {
-            if (tool->isInContact(objectArray[trainingTexture]))
+            if (tool->isInContact(objectVector[trainingTexture]))
                 outputRender = true;
         }
 
@@ -1035,47 +1056,67 @@ int loadTexture()
 		for (int zMaxIndex = 0; zMaxIndex < NUM_ZMAX; zMaxIndex++)
 			for (int zRatioIndex = 0; zRatioIndex < NUM_ZRATIO; zRatioIndex++)
 			{
+                boolean bad = false;
+
+                for (int badComboIndex = 0; badComboIndex < 5; badComboIndex++)
+                {
+                   comb combo = badComboArray[badComboIndex];
+
+                   if (combo.multipliedFactor == multipliedFactorArray[multipliedFactorIndex] && combo.zMax == zMaxArray[zMaxIndex])
+                   {
+                       bad = true;
+                       break;
+                   }
+                }
+
+                if (bad)
+                    continue;
+
 				double zMax = zMaxArray[zMaxIndex];
 				double zStick = zMax * zRatioArray[zRatioIndex];
                 double sigma = multipliedFactorArray[multipliedFactorIndex] / zMax;
-				int objectIndex = multipliedFactorIndex * NUM_ZMAX * NUM_ZRATIO + zMaxIndex * NUM_ZRATIO + zRatioIndex;
 
-				objectArray[objectIndex] = new cMesh();
+                cMesh* mesh = new cMesh();
 				
-				cCreatePlane(objectArray[objectIndex], planeSize, planeSize);
-				objectArray[objectIndex]->createAABBCollisionDetector(toolRadius);
-				world->addChild(objectArray[objectIndex]);
-				objectArray[objectIndex]->setLocalPos(planeX, 0, planeZ);
+				cCreatePlane(mesh, planeSize, planeSize);
+				mesh->createAABBCollisionDetector(toolRadius);
+				world->addChild(mesh);
+				mesh->setLocalPos(planeX, 0, planeZ);
 				///////////////////
-				objectArray[objectIndex]->m_texture = cTexture2d::create();
+				mesh->m_texture = cTexture2d::create();
 				//////////////////
-				objectArray[objectIndex]->m_material->setWhite();
+				mesh->m_material->setWhite();
 
-				objectArray[objectIndex]->m_material->setStiffness(maxStiffness);
-				objectArray[objectIndex]->m_material->setSigma(sigma);
-				objectArray[objectIndex]->m_material->setZmax(zMax);
-				objectArray[objectIndex]->m_material->setZstick(zStick);
-				objectArray[objectIndex]->m_material->setHapticTriangleSides(true, false);
+				mesh->m_material->setStiffness(maxStiffness);
+				mesh->m_material->setSigma(sigma);
+				mesh->m_material->setZmax(zMax);
+				mesh->m_material->setZstick(zStick);
+				mesh->m_material->setHapticTriangleSides(true, false);
 
-				objectArray[objectIndex]->setEnabled(false, true);
+				mesh->setEnabled(false, true);
+
+                objectVector.push_back(mesh);
 			}
 
-	int temp[NUM_MULTIPLIED_FACTOR * NUM_ZMAX * NUM_ZRATIO];
-	for (int index = 0; index < NUM_MULTIPLIED_FACTOR * NUM_ZMAX * NUM_ZRATIO; index++)
-		temp[index] = index;
+    vector<int> temp;
+    for (int index = 0; index < objectVector.size(); index++)
+        temp.push_back(index);
+    int* tempArray = &temp[0];
 	random_shuffle(std::begin(temp), std::end(temp));
-	memcpy(objectNumberArray[0], temp, 80 * sizeof(int));
+	memcpy(objectNumberArray[0], tempArray, 62 * sizeof(int));
 	random_shuffle(std::begin(temp), std::end(temp));
-	memcpy(objectNumberArray[2], temp, 120 * sizeof(int));
+	memcpy(objectNumberArray[2], tempArray, 124 * sizeof(int));
 	random_shuffle(std::begin(temp), std::end(temp));
-	memcpy(objectNumberArray[5], temp, 120 * sizeof(int));
+	memcpy(objectNumberArray[6], tempArray, 124 * sizeof(int));
+
+    
 
     return result;
 }
 
 int exp_prev()
 {
-	if (!(tool->isInContact(objectArray[trainingTexture])))
+	if (!(tool->isInContact(objectVector[trainingTexture])))
 	{
 		if (currentTrial > 0)
 		{
@@ -1099,7 +1140,10 @@ int exp_prev()
 
 int exp_next()
 {
-	if (!(tool->isInContact(objectArray[trainingTexture])))
+    
+    if (strlen(responseArray[currentSession][currentTrial].resp.friction) == 0)
+        return -3;
+	if (!(tool->isInContact(objectVector[trainingTexture])))
 	{
 		currentTrial++;
 		if (currentTrial >= NUM_TRIAL)
@@ -1152,22 +1196,38 @@ void exp_samp_change()
     isSampleReady = true;
 
     //Deactivate the previous models
-	objectArray[trainingTexture]->setEnabled(false, true);
+	objectVector[trainingTexture]->setEnabled(false, true);
 	trainingTexture = objectNumberArray[currentSession][currentTrial];
-	objectArray[trainingTexture]->setEnabled(true, true);
+	objectVector[trainingTexture]->setEnabled(true, true);
 	cout << scientific;
-	cout << "sigma: " << objectArray[trainingTexture]->m_material->getSigma() << " z_max: " << objectArray[trainingTexture]->m_material->getZmax() 
-		<< " z_stick: " << objectArray[trainingTexture]->m_material->getZstick() << endl << endl;
+	cout << "sigma: " << objectVector[trainingTexture]->m_material->getSigma() << " z_max: " << objectVector[trainingTexture]->m_material->getZmax() 
+		<< " z_stick: " << objectVector[trainingTexture]->m_material->getZstick() << endl << endl;
 }
 
 
 void exp_save_response()
 {
     string filename;
-    filename = "exp/R" + std::to_string(numCurrentSubject + 1) + ".txt";
+    string subject(subjectName);
+    filename = "exp/R" + subject + ".txt";
     ofstream response(filename);
 	vector<pair<int, string>> responseVector;
 
+    for (int sessionIndex = 2; sessionIndex < 10; sessionIndex++) {
+        for (int trialIndex = 0; trialIndex < 31; trialIndex++) {
+            string responseValue(responseArray[sessionIndex][trialIndex].resp.friction);
+
+            int objectIndex = objectNumberArray[sessionIndex][trialIndex];
+            float sigma = objectVector[objectIndex]->m_material->getSigma();
+            float zMax = objectVector[objectIndex]->m_material->getZmax();
+            float zStick = objectVector[objectIndex]->m_material->getZstick();
+
+            response << std::scientific;
+            response << "[multipliedFactor:" << sigma * zMax << ", zMax:" << zMax << ", zRatio" << zStick / zMax << "] : " << responseValue << endl;
+        }
+    }
+
+    /*
 	for (int experimentIndex = 0; experimentIndex < NUM_REPETITION; experimentIndex++)
 	{
 		for (int sessionCount = 0; sessionCount < NUM_EXPERIMENT_SESSION; sessionCount++)
@@ -1178,10 +1238,21 @@ void exp_save_response()
 				string responseValue(responseArray[sessionIndex][trialIndex].resp.friction);
 				responseVector.push_back(pair<int, string>(objectNumber, responseValue));
 			}
-		sort(responseVector.begin(), responseVector.end());
-		for (auto iter = responseVector.begin(); iter != responseVector.end(); iter++)
-			response << "[" << iter->first << ":" << iter->second << "]" << endl;
+		//sort(responseVector.begin(), responseVector.end());
+
+        for (auto iter = responseVector.begin(); iter != responseVector.end(); iter++)
+        {
+            float sigma = objectVector[iter->first]->m_material->getSigma();
+            float zMax = objectVector[iter->first]->m_material->getZmax();
+            float zStick = objectVector[iter->first]->m_material->getZstick();
+
+
+            response << std::scientific;
+            response << "[multipliedFactor:" << sigma * zMax << ", zMax:" << zMax << ", zRatio:" << zStick/zMax << "] : " << iter->second << endl;
+        }
+			
 	}
+    */
 
     response.close();
 }
